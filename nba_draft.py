@@ -7,11 +7,20 @@ def getSQLDatabaseConn():
     conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
     return conn
 
+def getTeams( conn ):
+    teams = []
+    cursor = conn.cursor()
+    sql = "SELECT id, name FROM teams ORDER BY name"
+    cursor.execute( sql )
+    for team_id, name in cursor.fetchall():
+        teams.append( { "id": team_id, "name": name } );
+    return teams;
+
+
 @app.route("/")
 def index():
     conn = getSQLDatabaseConn()
-    
-    return render_template( 'index.html' )
+    return render_template( 'index.html', teams = getTeams( conn ) )
 
 @app.route( "/static/<fileName>" )
 def static_files( fileName ):
