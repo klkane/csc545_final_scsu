@@ -1,1 +1,1 @@
-FLASK_APP=nba_draft.py flask run --host=0.0.0.0
+python3 nba_draft.py
