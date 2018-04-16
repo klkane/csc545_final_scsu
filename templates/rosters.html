@@ -1,0 +1,29 @@
+{% extends "bootstrap.html" %}
+{% block content %}
+	<table>
+		<tr>
+			<th>RosterId</th>
+			<th>SG</th>
+			<th>PG</th>
+			<th>SF</th>
+			<th>PF</th>
+			<th>C</th>
+			<th>G</th>
+			<th>F</th>
+			<th>Util</th>
+		</tr>
+		{% for roster in nba.getRosters() %}
+			<tr>
+				<td>{{ roster.id }}</td>
+				<td>{{ nba.getPlayer( roster.pos_pg ).name }}</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+		{% endfor %}
+	</table>
+{% endblock %}

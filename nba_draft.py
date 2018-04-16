@@ -4,7 +4,7 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 
-class NBAData:
+class NBADataSQL:
     conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
 
     def getTeams( self ):
@@ -18,10 +18,29 @@ class NBAData:
 
     def getRosters( self ):
         rosters = []
+        cursor = self.conn.cursor()
+        sql = "SELECT id, pos_c, pos_pf, pos_sf, pos_util, pos_g, pos_f, pos_pg, pos_sg FROM rosters ORDER BY id"
+        cursor.execute( sql )
+        for r_id, pos_c, pos_pf, pos_sf, pos_util, pos_g, pos_f, pos_pg, pos_sg in cursor.fetchall():
+            rosters.append( { "id": r_id, "pos_c": pos_c, "pos_pf": pos_pf, "pos_sf": pos_sf, "pos_util": pos_util, "pos_g": pos_g, "pos_f": pos_f, "pos_pg": pos_pg, "pos_sg": pos_sg } ) 
         return rosters
+
+    def getPlayer( self, p_id ):
+        player = {}
+        cursor = self.conn.cursor()
+        sql = "SELECT id, position, name, salary, avg_ppg, team FROM players WHERE id = %s";
+        cursor.execute( sql, ( p_id ) )
+        for p_id, position, name, salary, avg_ppg, team in cursor.fetchall():
+            player.update( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
+        return player
 
     def getPlayers( self ):
         players = []
+        cursor = self.conn.cursor()
+        sql = "SELECT id, position, name, salary, avg_ppg, team FROM players ORDER BY name";
+        cursor.execute( sql, ( p_id ) )
+        for p_id, position, name, salary, avg_ppg, team in cursor.fetchall():
+            players.append( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
         return players
 
     def getGames( self ):
@@ -29,15 +48,15 @@ class NBAData:
         return games
 
 
-data = NBAData();
+data = NBADataSQL();
 
-@app.route("/games", methods=['POST', 'GET'] )
+@app.route("/viewGames", methods=['POST', 'GET'] )
 def games():
-    return render_template( 'games.html', nba = data )
+    return render_template( 'viewGames.html', nba = data )
 
-@app.route("/players", methods=['POST', 'GET'] )
+@app.route("/viewPlayers", methods=['POST', 'GET'] )
 def players():
-    return render_template( 'players.html', nba = data )
+    return render_template( 'viewPlayers.html', nba = data )
 
 @app.route("/createRoster", methods=['POST', 'GET'] )
 def createRoster():
