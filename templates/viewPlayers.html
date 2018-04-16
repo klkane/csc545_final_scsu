@@ -1,3 +1,23 @@
 {% extends "bootstrap.html" %}
 {% block content %}
+<table style="text-align: left">
+	<tr>
+		<th>Id</th>
+		<th>Name</th>
+		<th>Position</th>
+		<th>Salary</th>
+		<th>Avg. PPG</th>
+		<th>Team</th>
+	</tr>
+	{% for player in nba.getPlayers() %}
+	<tr>
+		<td>{{ player.id }}</td>
+		<td>{{ player.name }}</td>
+		<td>{{ player.position }}</td>
+		<td>{{ player.salary }}</td>
+		<td>{{ player.avg_ppg }}</td>
+		<td>{{ player.team }}</td>
+	</tr>
+	{% endfor %}
+</table>
 {% endblock %}

@@ -1,6 +1,7 @@
 from flask import Flask, current_app, render_template
 import pymysql
 from pymongo import MongoClient
+from nocache import nocache
 
 app = Flask(__name__)
 
@@ -34,11 +35,15 @@ class NBADataSQL:
             player.update( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
         return player
 
-    def getPlayers( self ):
+    def getPlayers( self, team = "ALL" ):
         players = []
         cursor = self.conn.cursor()
-        sql = "SELECT id, position, name, salary, avg_ppg, team FROM players ORDER BY name";
-        cursor.execute( sql, ( p_id ) )
+        if( team == "ALL" ):
+            sql = "SELECT id, position, name, salary, avg_ppg, team FROM players ORDER BY name"
+            cursor.execute( sql )
+        else:
+            sql = "SELECT id, position, name, salary, avg_ppg, team FROM players WHERE team = %s ORDER BY name"
+            cursor.execute( sql, ( team ) )
         for p_id, position, name, salary, avg_ppg, team in cursor.fetchall():
             players.append( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
         return players
@@ -47,26 +52,34 @@ class NBADataSQL:
         games = []
         return games
 
+    def __init__( self ):
+        self.conn.autocommit( True );
+
 
 data = NBADataSQL();
 
 @app.route("/viewGames", methods=['POST', 'GET'] )
+@nocache
 def games():
     return render_template( 'viewGames.html', nba = data )
 
 @app.route("/viewPlayers", methods=['POST', 'GET'] )
+@nocache
 def players():
     return render_template( 'viewPlayers.html', nba = data )
 
 @app.route("/createRoster", methods=['POST', 'GET'] )
+@nocache
 def createRoster():
     return render_template( 'createRoster.html', nba = data )
 
 @app.route("/rosters", methods=['POST', 'GET'] )
+@nocache
 def rosters():
     return render_template( 'rosters.html', nba = data )
 
 @app.route("/", methods=['POST', 'GET'] )
+@nocache
 def index():
     return render_template( 'index.html', nba = data )
 
