@@ -5,6 +5,17 @@ from nocache import nocache
 
 app = Flask(__name__)
 
+class NBADataMongo:
+    client = MongoClient( host='localhost', port=27017) 
+
+    def getTeams( self ):
+        return self.client.csc545_final.teams
+
+    def copyTeamsFromSQL( self, sql ):
+        teams = self.getTeams()
+        for team in sql.getTeams():
+            teams.insert_one( team )
+
 class NBADataSQL:
     conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
 
@@ -82,6 +93,13 @@ def rosters():
 @nocache
 def index():
     return render_template( 'index.html', nba = data )
+
+@app.route("/copyToMongo", methods=['POST', 'GET'] )
+@nocache
+def copyMongo():
+    mongo = NBADataMongo()
+    mongo.copyTeamsFromSQL( data )
+    return render_template( 'copy.html', nba = data )
 
 @app.route( "/static/<fileName>" )
 def static_files( fileName ):

@@ -1,8 +1,60 @@
 {% extends "bootstrap.html" %}
 {% block content %}
-    <select name="team">
-    {% for team in nba.getTeams() %}
-	<option value="{{ team.id }}">{{ team.name }}</option>
-    {% endfor %}
+    <select id="position" name="position">
+	<option value="ALL">ALL</option>
+	<option value="C">F</option>
+	<option value="PG">PG</option>
+	<option value="SG">SG</option>
+	<option value="G">G</option>
+	<option value="PF">PF</option>
+	<option value="SF">SF</option>
+	<option value="F">F</option>
+	<option value="Util">Util</option>
     </select>
+
+<div class="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3">
+      <div class="bg-dark mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden">
+              <div class="my-3 py-3">
+<table style="text-align: left">
+	<tr>
+		<th></th>
+		<th>Name</th>
+		<th>Position</th>
+		<th>Salary</th>
+		<th>Avg. PPG</th>
+		<th>Team</th>
+	</tr>
+	{% for player in nba.getPlayers() %}
+	<tr>
+		<td><a class="btn btn-primary my-2" id="{{ player.id }}" href="#">Add</a>&nbsp;</td>
+		<td>{{ player.name }}</td>
+		<td>{{ player.position }}</td>
+		<td>{{ player.salary }}</td>
+		<td>{{ player.avg_ppg }}</td>
+		<td>{{ player.team }}</td>
+	</tr>
+	{% endfor %}
+</table>
+          </div>
+        </div>
+      <div class="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+              <div class="my-3 p-3">
+                    <table>
+			    <tr>
+				    <th>Position</th>
+				    <th>Name</th>
+			    </tr>
+			    <tr>
+				    <td>C</td>
+				    <td><input type="hidden" name="pos_c" value="" /><span id="pos_c"></span></td>
+			    </tr>
+			    <tr>
+				    <td>PG</td>
+				    <td><input type="hidden" name="pos_pg" value="" /><span id="pos_pg"></span></td>
+			    </tr>
+		    </table>
+
+	      </div>
+        </div>
+    </div>
 {% endblock %}
