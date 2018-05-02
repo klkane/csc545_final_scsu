@@ -1,17 +1,5 @@
 {% extends "bootstrap.html" %}
 {% block content %}
-    <select id="position" name="position">
-	<option value="ALL">ALL</option>
-	<option value="C">F</option>
-	<option value="PG">PG</option>
-	<option value="SG">SG</option>
-	<option value="G">G</option>
-	<option value="PF">PF</option>
-	<option value="SF">SF</option>
-	<option value="F">F</option>
-	<option value="Util">Util</option>
-    </select>
-
 <div class="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3">
       <div class="bg-dark mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden">
               <div class="my-3 py-3">
@@ -26,7 +14,7 @@
 	</tr>
 	{% for player in nba.getPlayers() %}
 	<tr>
-		<td><a class="btn btn-primary my-2" id="{{ player.id }}" href="#">Add</a>&nbsp;</td>
+		<td><a class="btn btn-primary add-player" id="{{ player.id }}" data-display="{{ player.name }} ({{ player.team }})" data-position="{{ player.position }}" href="#">Add</a>&nbsp;</td>
 		<td>{{ player.name }}</td>
 		<td>{{ player.position }}</td>
 		<td>{{ player.salary }}</td>
@@ -39,6 +27,7 @@
         </div>
       <div class="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
               <div class="my-3 p-3">
+		      <form method="post">
                     <table>
 			    <tr>
 				    <th>Position</th>
@@ -46,15 +35,83 @@
 			    </tr>
 			    <tr>
 				    <td>C</td>
-				    <td><input type="hidden" name="pos_c" value="" /><span id="pos_c"></span></td>
+				    <td><input id="C" type="hidden" name="pos_c" value="" /><span id="pos_c"></span></td
 			    </tr>
 			    <tr>
 				    <td>PG</td>
-				    <td><input type="hidden" name="pos_pg" value="" /><span id="pos_pg"></span></td>
+				    <td><input id="PG" type="hidden" name="pos_pg" value="" /><span id="pos_pg"></span></td>
+			    </tr>
+			    <tr>
+				    <td>SG</td>
+				    <td><input id="SG" type="hidden" name="pos_sg" value="" /><span id="pos_sg"></span></td>
+			    </tr>
+			    <tr>
+				    <td>G</td>
+				    <td><input id="G" type="hidden" name="pos_g" value="" /><span id="pos_g"></span></td>
+			    </tr>
+			    <tr>
+				    <td>PF</td>
+				    <td><input id="PF" type="hidden" name="pos_pf" value="" /><span id="pos_pf"></span></td>
+			    </tr>
+			    <tr>
+				    <td>SF</td>
+				    <td><input id="SF" type="hidden" name="pos_sf" value="" /><span id="pos_sf"></span></td>
+			    </tr>
+			    <tr>
+				    <td>F</td>
+				    <td><input id="F" type="hidden" name="pos_f" value="" /><span id="pos_f"></span></td>
+			    </tr>
+			    <tr>
+				    <td>UTIL</td>
+				    <td><input id="UTIL" type="hidden" name="pos_util" value="" /><span id="pos_util"></span></td>
 			    </tr>
 		    </table>
+		      <input class="btn" type="submit" name="submit" id="rosterCreate" value="Create Roster" disabled/>
+		      </form>
 
 	      </div>
         </div>
     </div>
+    <script>
+	$( '.add-player' ).click( function() {
+		var positions = $(this).attr( 'data-position' ).split( "/" );
+		if( $(this).attr( 'data-position' ).match( /G/ ) ) {
+			positions.push( "G" );
+		}
+		if( $(this).attr( 'data-position' ).match( /F/ ) ) {
+			positions.push( "F" );
+		}
+		positions.push( "UTIL" );
+		var player = $(this);
+		var done = false;
+		positions.forEach( function( element ) {
+			if( done ) {}
+			else {
+				var input = document.getElementById( element );
+				if( input && input.value == "" ) {
+					input.value = player.attr( 'id' );
+					var span = document.getElementById( "pos_" + element.toLowerCase() );
+			       		span.innerHTML = player.attr( 'data-display' );	
+					done = true;
+				}
+			}	
+		});
+		if( done == true ) {
+			player.parent().parent().remove();
+		}
+
+		var rosterFull = true;
+		$("input[type=hidden]").each( function() {
+			if( $(this).val() == '' ) {
+				rosterFull = false;
+			}
+		});
+		
+		if( rosterFull ) {
+			$('#rosterCreate').addClass( 'btn-primary' );
+			$('#rosterCreate').prop( 'disabled', false );
+		}
+		return false;
+	} );
+    </script>
 {% endblock %}

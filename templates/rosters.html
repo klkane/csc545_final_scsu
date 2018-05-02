@@ -1,28 +1,29 @@
 {% extends "bootstrap.html" %}
 {% block content %}
-	<table>
+	<table>	
 		<tr>
 			<th>RosterId</th>
-			<th>SG</th>
-			<th>PG</th>
-			<th>SF</th>
-			<th>PF</th>
 			<th>C</th>
+			<th>PG</th>
+			<th>SG</th>
 			<th>G</th>
+			<th>PF</th>
+			<th>SF</th>
 			<th>F</th>
 			<th>Util</th>
 		</tr>
 		{% for roster in nba.getRosters() %}
 			<tr>
 				<td>{{ roster.id }}</td>
+				<td>{{ nba.getPlayer( roster.pos_c ).name }}</td>
 				<td>{{ nba.getPlayer( roster.pos_pg ).name }}</td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
+				<td>{{ nba.getPlayer( roster.pos_sg ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_g ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_pf ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_sf ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_f ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_util ).name }}</td>
+				<td><a href="/deleteRoster/{{ roster.id }}" class="btn primary-btn">Delete</a></td>
 			</tr>
 		{% endfor %}
 	</table>
