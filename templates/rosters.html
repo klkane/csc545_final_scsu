@@ -24,6 +24,7 @@
 				<td>{{ nba.getPlayer( roster.pos_f ).name }}</td>
 				<td>{{ nba.getPlayer( roster.pos_util ).name }}</td>
 				<td><a href="/deleteRoster/{{ roster.id }}" class="btn primary-btn">Delete</a></td>
+				<td><a href="/analyzeRoster/{{ roster.id }}" class="btn primary-btn">Analyze</a></td>
 			</tr>
 		{% endfor %}
 	</table>

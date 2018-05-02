@@ -1,0 +1,55 @@
+{% extends "bootstrap.html" %}
+{% block content %}
+	<table>	
+		<tr>
+			<th>RosterId</th>
+			<th>C</th>
+			<th>PG</th>
+			<th>SG</th>
+			<th>G</th>
+			<th>PF</th>
+			<th>SF</th>
+			<th>F</th>
+			<th>Util</th>
+			<th></th>
+			<th></th>
+		</tr>
+		{% set roster = nba.getRoster( rosterId ) %}
+			<tr>
+				<td>{{ roster.id }}</td>
+				<td>{{ nba.getPlayer( roster.pos_c ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_pg ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_sg ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_g ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_pf ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_sf ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_f ).name }}</td>
+				<td>{{ nba.getPlayer( roster.pos_util ).name }}</td>
+			</tr>
+	</table>
+	<br /><br />
+		{% set total_salary = [0] %}
+		{% set avg_ppg = [0] %}
+		{% for player in nba.getPlayersByRoster( rosterId ) %}
+		{% if total_salary.append( total_salary.pop() + player.salary ) %}{% endif %}
+		{% if avg_ppg.append( avg_ppg.pop() + player.avg_ppg ) %}{% endif %}
+		{% endfor %}
+		{% set proj_points = avg_ppg.pop() %}
+		{% set total_salary = total_salary.pop() %}
+		{% set effeciency = total_salary / proj_points %}
+		{% set avg_ppg = proj_points / 8 %}
+		<table>
+			<tr>
+				<th>Total Salary</th>
+				<th>Average Avg. PPG</th>
+				<th>Projected Points</th>
+				<th>Effeciency</th>
+			</tr>
+			<tr>
+				<td>{{ total_salary }}</td>
+				<td>{{ avg_ppg }}</td>
+				<td>{{ proj_points }}</td>
+				<td>{{ effeciency }}</td>
+			</tr>
+		</table>
+{% endblock %}

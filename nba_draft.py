@@ -1,5 +1,6 @@
 from flask import Flask, current_app, render_template, request, redirect, url_for
 import pymysql
+import sys
 from pymongo import MongoClient
 from nocache import nocache
 
@@ -11,38 +12,98 @@ class NBADataMongo:
     def getTeams( self ):
         return self.client.csc545_final.teams.find().sort( "name", 1 )
 
-    def _getTeams( self ):
-        return self.client.csc545_final.teams
+    def deleteAll( self ):
+        self.client.csc545_final.teams.drop()
+        self.client.csc545_final.extended_players.drop()
+        self.client.csc545_final.players.drop()
+        self.client.csc545_final.rosters.drop()
+        return True
 
-    def copyTeamsFromSQL( self, sql ):
-        teams = self._getTeams()
+    def copyFromSQL( self, sql ):
+        teams = self.client.csc545_final.teams
         for team in sql.getTeams():
-            teams.insert_one( team)
+            teams.insert_one( team )
+        
+        players = self.client.csc545_final.players
+        for player in sql.getPlayers():
+            players.insert_one( player )
+        
+        extended_players = self.client.csc545_final.extended_players
+        for extended_player in sql.getExtendedPlayers():
+            extended_players.insert_one( extended_player )
+        
+        rosters = self.client.csc545_final.rosters
+        for roster in sql.getRosters():
+            rosters.insert_one( roster )
     
+    def getPlayersByRoster( self, rosterId ):
+        players = []
+        roster = self.getRoster( rosterId )
+        players.append( self.getPlayer( roster['pos_c'] ) )
+        players.append( self.getPlayer( roster['pos_pg'] ) )
+        players.append( self.getPlayer( roster['pos_sg'] ) )
+        players.append( self.getPlayer( roster['pos_g'] ) )
+        players.append( self.getPlayer( roster['pos_pf'] ) )
+        players.append( self.getPlayer( roster['pos_sf'] ) )
+        players.append( self.getPlayer( roster['pos_f'] ) )
+        players.append( self.getPlayer( roster['pos_util'] ) )
+        return players
+   
     def updateTeam( self, team_id, name ):
-        self._getTeams().replace_one( { "id": team_id }, { "id": team_id, "name": name } );
+        self.client.csc545_final.teams.replace_one( { "id": team_id }, { "id": team_id, "name": name } );
+        return True
+    
+    def testConnection( self ):
         return True
 
     def getRosters( self ):
-        rosters = []
-        return rosters
+        return self.client.csc545_final.rosters.find().sort( "id", 1 )
+
+    def getPlayer( self, p_id ):
+        if p_id:
+            return self.client.csc545_final.players.find_one({ "id": p_id })
+        else:
+            return {}
+
+    def getPlayers( self ):
+        return self.client.csc545_final.players.find().sort( "name", 1 )
+
+    def getPlayerExtended( self, playerId ):
+        return self.client.csc545_final.extended_players.find_one( { "playerid": playerId } )
+
+    def getRoster( self, rosterId ):
+        # there is some type issue here that is quite confusing but the following call doesnt work
+        # return self.client.csc545_final.rosters.find_one( { "id": rosterId } )
+        # so I am interating over the set to make this happen, not a great solution but it works!
+        for roster in self.getRosters():
+            if str( roster['id'] ) == str( rosterId ):
+                return roster
+        return {}
 
     def deleteRoster( self, roster_id ):
+        self.client.csc545_final.rosters.remove( { 'id': int( roster_id ) } )
         return True
 
     def addRoster( self, pos_c, pos_pg, pos_sg, pos_g, pos_pf, pos_sf, pos_f, pos_util ):
+        maxRoster = self.client.csc545_final.rosters.find_one( sort=[("id", -1)] )
+        nextId = maxRoster['id'] + 1
+        # need to cast all to int to preserve type!
+        self.client.csc545_final.rosters.insert_one( { "id": int( nextId ), "pos_c": int( pos_c ), "pos_pg": int( pos_pg ), "pos_sg": int( pos_sg ), "pos_g": int( pos_g ), "pos_pf": int( pos_pf ), "pos_sf": int( pos_sf ), "pos_f": int( pos_f ), "pos_util": int( pos_util ) } )
         return True
     
-    def getPlayer( self, p_id ):
-        player = {}
-        return player
-
-    def getPlayers( self ):
-        players = []
-        return players
-
 class NBADataSQL:
     conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
+
+    def testConnection( self ):
+        try:
+            cursor = self.conn.cursor()
+            sql = "SELECT 1 FROM dual"
+            cursor.execute( sql )
+        except OperationalError:
+            conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
+        else:
+            return True
+        return True
 
     def getTeams( self ):
         teams = []
@@ -58,6 +119,46 @@ class NBADataSQL:
         cursor = self.conn.cursor()
         cursor.execute( sql, ( name, team_id ) )
         return True
+
+    def getRoster( self, rosterId ):
+        roster = {}
+        cursor = self.conn.cursor()
+        sql = "SELECT id, pos_c, pos_pf, pos_sf, pos_util, pos_g, pos_f, pos_pg, pos_sg FROM rosters WHERE id = %s"
+        cursor.execute( sql, ( rosterId ) )
+        for r_id, pos_c, pos_pf, pos_sf, pos_util, pos_g, pos_f, pos_pg, pos_sg in cursor.fetchall():
+            roster = { "id": r_id, "pos_c": pos_c, "pos_pf": pos_pf, "pos_sf": pos_sf, "pos_util": pos_util, "pos_g": pos_g, "pos_f": pos_f, "pos_pg": pos_pg, "pos_sg": pos_sg }
+        return roster
+
+    def getPlayerExtended( self, playerId ):
+        player = {}
+        cursor = self.conn.cursor()
+        sql = "SELECT points, FGpct, Rebounds, Assists, Steals, Blocks FROM extended_players WHERE playerid = %s"
+        cursor.execute( sql, ( playerId ) )
+        for points, fgpct, rebounds, assists, steals, blocks in cursor.fetchall():
+            player = { "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assist": assists, "steals": steals, "blocks": blocks }
+        return player
+
+    def getExtendedPlayers( self ):
+        players = []
+        cursor = self.conn.cursor()
+        sql = "SELECT playerid, points, FGpct, Rebounds, Assists, Steals, Blocks FROM extended_players"
+        cursor.execute( sql )
+        for playerid, points, fgpct, rebounds, assists, steals, blocks in cursor.fetchall():
+            players.append( { "playerid": playerid, "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assist": assists, "steals": steals, "blocks": blocks } )
+        return players
+
+    def getPlayersByRoster( self, rosterId ):
+        players = []
+        roster = self.getRoster( rosterId )
+        players.append( self.getPlayer( roster['pos_c'] ) )
+        players.append( self.getPlayer( roster['pos_pg'] ) )
+        players.append( self.getPlayer( roster['pos_sg'] ) )
+        players.append( self.getPlayer( roster['pos_g'] ) )
+        players.append( self.getPlayer( roster['pos_pf'] ) )
+        players.append( self.getPlayer( roster['pos_sf'] ) )
+        players.append( self.getPlayer( roster['pos_f'] ) )
+        players.append( self.getPlayer( roster['pos_util'] ) )
+        return players
 
     def getRosters( self ):
         rosters = []
@@ -112,16 +213,19 @@ data = NBADataSQL();
 @app.route("/viewGames", methods=['POST', 'GET'] )
 @nocache
 def games():
+    data.testConnection()
     return render_template( 'viewGames.html', nba = data )
 
 @app.route("/viewPlayers", methods=['POST', 'GET'] )
 @nocache
 def players():
+    data.testConnection()
     return render_template( 'viewPlayers.html', nba = data )
 
 @app.route("/viewTeams", methods=['POST', 'GET'] )
 @nocache
 def teams():
+    data.testConnection()
     if request.method == "POST":
         for team in data.getTeams():
             if team["name"] != request.form.get( team["id"] + "_name" ):
@@ -132,6 +236,7 @@ def teams():
 @app.route("/createRoster", methods=['POST', 'GET'] )
 @nocache
 def createRoster():
+    data.testConnection()
     if request.method == "POST":
         data.addRoster( request.form.get( "pos_c" ),
                 request.form.get( "pos_pg" ),
@@ -147,24 +252,35 @@ def createRoster():
 @app.route("/rosters", methods=['POST', 'GET'] )
 @nocache
 def rosters():
+    data.testConnection()
     return render_template( 'rosters.html', nba = data )
 
 @app.route("/", methods=['POST', 'GET'] )
 @nocache
 def index():
+    data.testConnection()
     return render_template( 'index.html', nba = data )
+
+@app.route("/analyzeRoster/<rosterId>", methods=['POST', 'GET'] )
+@nocache
+def analyzeRoster( rosterId ):
+    data.testConnection()
+    return render_template( 'analyzeRoster.html', nba = data, rosterId = rosterId )
 
 @app.route("/deleteRoster/<rosterId>" )
 @nocache
 def delete_roster( rosterId ):
+    data.testConnection()
     data.deleteRoster( rosterId )
     return redirect( url_for( 'rosters' ) )
 
 @app.route("/copyToMongo", methods=['POST', 'GET'] )
 @nocache
 def copyMongo():
+    data.testConnection()
     mongo = NBADataMongo()
-    mongo.copyTeamsFromSQL( data )
+    mongo.deleteAll()
+    mongo.copyFromSQL( data )
     return render_template( 'copy.html', nba = data )
 
 @app.route( "/static/<fileName>" )

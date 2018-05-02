@@ -15,11 +15,58 @@
 	{% for player in nba.getPlayers() %}
 	<tr>
 		<td><a class="btn btn-primary add-player" id="{{ player.id }}" data-display="{{ player.name }} ({{ player.team }})" data-position="{{ player.position }}" href="#">Add</a>&nbsp;</td>
-		<td>{{ player.name }}</td>
+		<td>{{ player.name }}
+		
+			<div style="color: black;" id="modal_{{ player.id }}" class="modal fade" role="dialog">
+				  <div class="modal-dialog">
+					      <!-- Modal content-->
+					          <div class="modal-content">
+						        <div class="modal-header">
+								<h4 class="modal-title">{{ player.name }}</h4>
+							    	<span class="playerImage" data-name="{{ player.name }}"></span>
+						      </div>
+		 			            <div class="modal-body">
+								    {% set extendedStats = nba.getPlayerExtended( player.id ) %}
+								    {% if extendedStats %}
+							    <table>
+								    <tr>
+									    <th>Points</th><td>{{ extendedStats.points }}</td>
+								    </tr>
+								    <tr>
+									    <th>Field Goal</th><td>{{ extendedStats.fgpct }}%</td>
+								    </tr>
+								    <tr>
+									    <th>Rebounds</th><td>{{ extendedStats.rebounds }}</td>
+								    </tr>
+								    <tr>
+									    <th>Assists</th><td>{{ extendedStats.assists }}</td>
+								    </tr>
+								    <tr>
+									    <th>Steals</th><td>{{ extendedStats.steals }}</td>
+								    </tr>
+								    <tr>
+									    <th>Blocks</th><td>{{ extendedStats.blocks }}</td>
+								    </tr>
+							    </table>
+								    {% else %}
+								    <p>No Research Data Available</p>
+								    {% endif %}
+					          </div>
+					        <div class="modal-footer">
+					        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					      </div>
+			          </div>
+			    </div>
+			</div>
+		
+		</td>
 		<td>{{ player.position }}</td>
 		<td>{{ player.salary }}</td>
 		<td>{{ player.avg_ppg }}</td>
 		<td>{{ player.team }}</td>
+		<td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal_{{ player.id }}">
+				  Research
+			</button></td>
 	</tr>
 	{% endfor %}
 </table>
@@ -35,7 +82,7 @@
 			    </tr>
 			    <tr>
 				    <td>C</td>
-				    <td><input id="C" type="hidden" name="pos_c" value="" /><span id="pos_c"></span></td
+				    <td><input id="C" type="hidden" name="pos_c" value="" /><span id="pos_c"></span></td>
 			    </tr>
 			    <tr>
 				    <td>PG</td>
