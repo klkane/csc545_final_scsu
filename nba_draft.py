@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 class NBADataMongo:
     client = MongoClient( host='localhost', port=27017) 
+    sortFilter = {}
 
     def getTeams( self ):
         return self.client.csc545_final.teams.find().sort( "name", 1 )
@@ -65,8 +66,8 @@ class NBADataMongo:
         else:
             return {}
 
-    def getPlayers( self ):
-        return self.client.csc545_final.players.find().sort( "name", 1 )
+    def getPlayers( self, sortFilter = {} ):
+        return self.client.csc545_final.players.find( sortFilter ).sort( "name", 1 )
 
     def getPlayerExtended( self, playerId ):
         return self.client.csc545_final.extended_players.find_one( { "playerid": playerId } )
@@ -93,16 +94,10 @@ class NBADataMongo:
     
 class NBADataSQL:
     conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
+    sortFilter = {}
 
     def testConnection( self ):
-        try:
-            cursor = self.conn.cursor()
-            sql = "SELECT 1 FROM dual"
-            cursor.execute( sql )
-        except OperationalError:
-            conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
-        else:
-            return True
+        conn = pymysql.connect( host='127.0.0.1', user='csc545_final', passwd='nb4f4nt4sy', db='csc545_final' )
         return True
 
     def getTeams( self ):
@@ -135,7 +130,7 @@ class NBADataSQL:
         sql = "SELECT points, FGpct, Rebounds, Assists, Steals, Blocks FROM extended_players WHERE playerid = %s"
         cursor.execute( sql, ( playerId ) )
         for points, fgpct, rebounds, assists, steals, blocks in cursor.fetchall():
-            player = { "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assist": assists, "steals": steals, "blocks": blocks }
+            player = { "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks }
         return player
 
     def getExtendedPlayers( self ):
@@ -144,7 +139,7 @@ class NBADataSQL:
         sql = "SELECT playerid, points, FGpct, Rebounds, Assists, Steals, Blocks FROM extended_players"
         cursor.execute( sql )
         for playerid, points, fgpct, rebounds, assists, steals, blocks in cursor.fetchall():
-            players.append( { "playerid": playerid, "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assist": assists, "steals": steals, "blocks": blocks } )
+            players.append( { "playerid": playerid, "points": points, "fgpct": str( fgpct ), "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks } )
         return players
 
     def getPlayersByRoster( self, rosterId ):
@@ -190,15 +185,21 @@ class NBADataSQL:
             player.update( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
         return player
 
-    def getPlayers( self, team = "ALL" ):
+    def getPlayers( self, searchFilter = None ):
         players = []
         cursor = self.conn.cursor()
-        if( team == "ALL" ):
-            sql = "SELECT id, position, name, salary, avg_ppg, team FROM players ORDER BY name"
-            cursor.execute( sql )
-        else:
-            sql = "SELECT id, position, name, salary, avg_ppg, team FROM players WHERE team = %s ORDER BY name"
-            cursor.execute( sql, ( team ) )
+        sql = "SELECT id, position, name, salary, avg_ppg, team FROM players "
+        where = ""
+
+        if searchFilter:
+            where = "WHERE "
+            for column in searchFilter:
+                if column == 'team':
+                    searchFilter[column]['val'] = "'" + searchFilter[column]['val'] + "'"
+                where = where + column + " " + searchFilter[column]['op'] + " " + searchFilter[column]['val'] + " "
+        orderClause = "ORDER BY name"
+        sql = sql + where + orderClause    
+        cursor.execute( sql )
         for p_id, position, name, salary, avg_ppg, team in cursor.fetchall():
             players.append( { "id": p_id, "position": position, "name": name, "salary": salary, "avg_ppg": avg_ppg, "team": team } );
         return players
@@ -220,7 +221,11 @@ def games():
 @nocache
 def players():
     data.testConnection()
-    return render_template( 'viewPlayers.html', nba = data )
+    filterSort = None
+    if request.method == "POST" and request.form.get( 'column' ) and request.form.get( 'val' ):
+        filterSort = { request.form.get( 'column' ): { "op": request.form.get( 'op' ), "val": request.form.get( 'val' ) } }
+
+    return render_template( 'viewPlayers.html', nba = data, filterSort = filterSort  )
 
 @app.route("/viewTeams", methods=['POST', 'GET'] )
 @nocache

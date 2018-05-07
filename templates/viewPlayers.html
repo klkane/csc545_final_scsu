@@ -1,22 +1,43 @@
 {% extends "bootstrap.html" %}
 {% block content %}
+<form method="post">
+	<select name="column">
+		<option value=""></option>
+		<option value="salary">Salary</option>
+		<option value="avg_ppg">Avg. PPG</option>
+		<option value="team">Team</option>
+	</select>
+	<select name="op">
+		<option value="=">=</option>
+		<option value="<"><</option>
+		<option value=">">></option>
+	</select>
+	<input type="text" name="val" value="" />
+	<input type="submit" class="btn btn-primary" value="Filter" name="filterSub" />
+</form>
 <table style="text-align: left">
 	<tr>
-		<th>Id</th>
 		<th>Name</th>
 		<th>Position</th>
 		<th>Salary</th>
 		<th>Avg. PPG</th>
 		<th>Team</th>
+		<th>Points</th>
+		<th>Assists</th>
+		<th>Blocks</th>
+		<th>Rebounds</th>
 	</tr>
-	{% for player in nba.getPlayers() %}
-	<tr>
-		<td>{{ player.id }}</td>
+	{% for player in nba.getPlayers( filterSort ) %}
+	<tr>{% set ext = nba.getPlayerExtended( player.id ) %}
 		<td>{{ player.name }}</td>
 		<td>{{ player.position }}</td>
 		<td>{{ player.salary }}</td>
 		<td>{{ player.avg_ppg }}</td>
 		<td>{{ player.team }}</td>
+		<td>{{ ext.points }}</td>
+		<td>{{ ext.assists }}</td>
+		<td>{{ ext.blocks }}</td>
+		<td>{{ ext.rebounds }}</td>
 	</tr>
 	{% endfor %}
 </table>

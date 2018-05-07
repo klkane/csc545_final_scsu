@@ -2,7 +2,6 @@
 {% block content %}
 	<table>	
 		<tr>
-			<th>RosterId</th>
 			<th>C</th>
 			<th>PG</th>
 			<th>SG</th>
@@ -14,7 +13,6 @@
 		</tr>
 		{% for roster in nba.getRosters() %}
 			<tr>
-				<td>{{ roster.id }}</td>
 				<td>{{ nba.getPlayer( roster.pos_c ).name }}</td>
 				<td>{{ nba.getPlayer( roster.pos_pg ).name }}</td>
 				<td>{{ nba.getPlayer( roster.pos_sg ).name }}</td>
